@@ -10,7 +10,7 @@ pub mod event;
 use bevy::{prelude::App, DefaultPlugins};
 use bevy_obj::ObjPlugin;
 use environment::setup_plane;
-use plugins::{ tick_skill::TickSkillPlugin, freefloat_camera::FreefloatCameraPlugin, selection_tracker::SelectionTrackerPlugin};
+use plugins::{ tick_skill::TickSkillPlugin, freefloat_camera::FreefloatCameraPlugin, selection_tracker::SelectionTrackerPlugin, pickable_movement::PickableMovementPlugin};
 use resources::AssetLoader;
 use smooth_bevy_cameras::{LookTransformPlugin};
 // use crate::plugins::camera::OrbitCameraPlugin;
@@ -29,5 +29,6 @@ fn main() {
     .add_plugin(ObjPlugin)
     .add_plugin(TickSkillPlugin)
     .add_plugin(SelectionTrackerPlugin)
+    .add_plugin(PickableMovementPlugin)
     .run();
 }

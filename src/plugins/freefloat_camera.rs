@@ -1,7 +1,7 @@
 use bevy::{math::Vec2, prelude::*};
 use smooth_bevy_cameras::{LookAngles, LookTransform, LookTransformBundle, Smoother};
 
-use crate::control::freefloat_camera::freefloat_cam_controller;
+use crate::{control::freefloat_camera::freefloat_cam_controller, resources::selection_tracker::DisableCameraTranslation};
 
 #[derive(Default)]
 pub struct FreefloatCameraPlugin {
@@ -91,6 +91,7 @@ impl Default for FreefloatCameraController {
 pub fn control_system(
     mut events: EventReader<ControlEvent>,
     mut cameras: Query<(&FreefloatCameraController, &mut LookTransform)>,
+    is_disabled:Res<DisableCameraTranslation>
 ) {
     // Can only control one camera at a time.
     let (controller, mut look_trans) =
@@ -100,7 +101,7 @@ pub fn control_system(
             return;
         };
 
-    if controller.enabled {
+    if controller.enabled && !is_disabled.0 {
         let look_vector = look_trans.look_direction().unwrap();
         let mut look_angles = LookAngles::from_vector(look_vector);
 

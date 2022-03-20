@@ -1,11 +1,14 @@
 use bevy::prelude::*;
 
-use crate::resources::selection_tracker::*;
+use crate::systems::camera_tracker::*;
+
 
 pub struct CameraTrackerPlugin;
 
 impl Plugin for CameraTrackerPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ObjectSelected::default());
+        app.insert_resource(CameraTracker::new())
+        .add_system(track_camera)
+        .add_system(sync_entity_with_camera);
     }
 }

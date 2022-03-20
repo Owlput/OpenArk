@@ -1,6 +1,6 @@
 pub mod op_skill;
 pub mod skill_counter;
-pub mod selection_listener;
+pub mod selection_tracker;
 pub mod camera_tracker;
 
 use bevy::math::{Quat, Vec2, Vec3};
@@ -12,6 +12,7 @@ use bevy::prelude::{
 
 use self::camera_tracker::CameraToTrack;
 use self::skill_counter::SkillCounter;
+use crate::control::pickable_movement::PickableMovementController;
 use crate::environment::TransformBundle;
 use crate::general_components::Name;
 use crate::plugins::freefloat_camera::*;
@@ -58,10 +59,6 @@ pub fn setup_camera(mut commands: Commands) {
         ))
         .insert_bundle(bevy_mod_picking::PickingCameraBundle::default())
         .insert(CameraToTrack);
+    commands.spawn().insert(PickableMovementController{enabled:true});
 }
 
-// pub fn move_selected(pick_state:Res<PickState>,obj_picked:Res<ObjectSelected>,mut entities:Query<&mut Transform,With<PickableBundle>>){
-//     for mut transform in entities.iter_mut(){
-//         transform.translation = Vec3::new(5.0, -1.0, 3.0);
-//     }
-// }
