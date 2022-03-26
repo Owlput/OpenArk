@@ -1,7 +1,14 @@
+/*
+    The code here is originally from smooth_bevy_camera
+*/
+
 use bevy::{math::Vec2, prelude::*};
 use smooth_bevy_cameras::{LookAngles, LookTransform, LookTransformBundle, Smoother};
 
-use crate::{control::freefloat_camera::freefloat_cam_controller, resources::selection_tracker::DisableCameraTranslation};
+use crate::{
+    control::freefloat_camera::freefloat_cam_controller,
+    systems::selection_tracker::MovableSelectionLock,
+};
 
 #[derive(Default)]
 pub struct FreefloatCameraPlugin {
@@ -18,9 +25,7 @@ impl FreefloatCameraPlugin {
 
 impl Plugin for FreefloatCameraPlugin {
     fn build(&self, app: &mut App) {
-        let app = app
-            .add_system(control_system)
-            .add_event::<ControlEvent>();
+        let app = app.add_system(control_system).add_event::<ControlEvent>();
         // .add_system(sync_entity_with_camera)
 
         if !self.override_input_system {
@@ -91,7 +96,7 @@ impl Default for FreefloatCameraController {
 pub fn control_system(
     mut events: EventReader<ControlEvent>,
     mut cameras: Query<(&FreefloatCameraController, &mut LookTransform)>,
-    is_disabled:Res<DisableCameraTranslation>
+    is_disabled: Res<MovableSelectionLock>,
 ) {
     // Can only control one camera at a time.
     let (controller, mut look_trans) =

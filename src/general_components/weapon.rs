@@ -1,10 +1,4 @@
-use bevy::prelude::Component;
+use bevy::prelude::Bundle;
 
-#[derive(Component)]
-pub struct Weapon{
-    
-}
-
-pub enum Weapons{
-
-}
+#[derive(Bundle)]
+pub struct Weapon {}

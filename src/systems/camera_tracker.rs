@@ -1,4 +1,3 @@
-
 use bevy::prelude::*;
 
 pub fn track_camera(
@@ -38,6 +37,17 @@ impl CameraTracker {
     pub fn set_val(&mut self, pos: Vec3, orient: Quat) {
         self.pos = pos;
         self.orient = orient;
+    }
+    pub fn set_pos(&mut self, pos: Vec3) {
+        self.pos = pos
+    }
+    pub fn calc_vec_3d(&self, oth: Vec3) -> Vec3 {
+        (self.pos - oth).normalize_or_zero()
+    }
+    pub fn calc_vec_2d(&self, oth: Vec3) -> Vec3 {
+        let mut vec = self.pos - oth;
+        vec.y = 0.0;
+        vec
     }
 }
 

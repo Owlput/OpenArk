@@ -1,16 +1,12 @@
-use bevy::prelude::{Bundle};
+use bevy::{prelude::Bundle, sprite::SpriteBundle};
 
-use crate::general_components::*;
+use crate::{environment::TransformBundle, general_components::Name};
 
 #[derive(Bundle)]
 pub struct Operator{
     name:Name,
-    health:Health,
-    weapon:weapon::Weapon,
+    #[bundle]
+    transform:TransformBundle,
+    #[bundle]
+    sprite:SpriteBundle
 }
-
-// impl Operator{
-//     pub fn new()->Self{
-//         Operator
-//     }
-// }

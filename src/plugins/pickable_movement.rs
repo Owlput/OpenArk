@@ -1,37 +1,42 @@
-use bevy::{math::Vec3, prelude::{App, Plugin, EventReader, Query, With, Transform}};
+use bevy::{
+    math::Vec3,
+    prelude::{App, EventReader, Plugin, Query, Res, Transform, With},
+};
 
-use crate::{general_components::{Movable, Selected}, control::pickable_movement::pickable_movement_controller};
+use crate::{control::pickable_movement::*, systems::selection_tracker::*};
 
 #[derive(Default)]
 pub struct PickableMovementPlugin;
 
-impl Plugin for PickableMovementPlugin{
-    fn build(&self,app:&mut App){
+impl Plugin for PickableMovementPlugin {
+    fn build(&self, app: &mut App) {
         app.add_system(control_system)
-        .add_event::<ControlEvent>()
-        .add_system(pickable_movement_controller);
+            .add_event::<ControlEvent>()
+            .add_system(pickable_movement_controller);
     }
 }
 
-pub enum ControlEvent{
-    Translate(Vec3)
+pub enum ControlEvent {
+    Translate(Vec3),
 }
 
 fn control_system(
-    mut events:EventReader<ControlEvent>,
-    mut query:Query<&mut Transform,(With<Movable>,With<Selected>)>,
-){
-    let mut transform = if let Some(transform) = query.iter_mut().next(){
+    mut events: EventReader<ControlEvent>,
+    selected: Res<SelectedMovable>,
+    mut query: Query<&mut Transform, With<Selected>>,
+) {
+    if selected.0 == None {
+        return;
+    }
+    let mut transform = if let Some(transform) = query.iter_mut().next() {
         transform
-    }else{return};
-    
-    for event in events.iter(){
-        match event{
-            &ControlEvent::Translate(delta)=>{
-                println!("event received");
-                transform.translation += delta
-            }
+    } else {
+        return;
+    };
+
+    for event in events.iter() {
+        match event {
+            &ControlEvent::Translate(delta) => transform.translation += delta,
         }
     }
-
 }

@@ -1,10 +1,7 @@
 use bevy::prelude::Component;
 
 pub mod weapon;
-#[derive(Component)]
-pub struct Movable;
-#[derive(Component)]
-pub struct Selected;
+pub mod status;
 
 #[derive(Component)]
 pub struct Name(pub String);

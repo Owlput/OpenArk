@@ -3,10 +3,11 @@ use bevy::{
     prelude::{App, Plugin},
 };
 
-use self::{speed_modifier::SpeedModifier, selection_tracker::{EntitySelected, DisableCameraTranslation}};
+use crate::systems::selection_tracker::*;
+
+use self::speed_modifier::SpeedModifier;
 
 pub mod effects;
-pub mod selection_tracker;
 pub mod speed_modifier;
 pub mod ticker;
 
@@ -16,7 +17,7 @@ impl Plugin for AssetLoader {
     fn build(&self, app: &mut App) {
         app.insert_resource(ticker::Tick005(Timer::from_seconds(0.05, true)))
             .insert_resource(SpeedModifier::new(1.0))
-            .insert_resource(EntitySelected::default())
-            .insert_resource(DisableCameraTranslation::default());
+            .insert_resource(MovableSelectionLock::default())
+            .insert_resource(SelectedMovable::default());
     }
 }
