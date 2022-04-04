@@ -1,15 +1,15 @@
 pub struct SpeedModifier {
-    speed: f32,
+    speed: f64,
 }
 
 impl SpeedModifier {
-    pub fn new(multiplier:f32) -> Self {
+    pub fn new(multiplier:f64) -> Self {
         Self { speed: multiplier }
     }
-    pub fn change_to(&mut self,speed:f32){
+    pub fn change_to(&mut self,speed:f64){
         self.speed = speed
     }
-    pub fn get(&self)->f32{
+    pub fn get(&self)->f64{
         self.speed
     }
 }

@@ -2,13 +2,16 @@
     The code here is originally from smooth_bevy_camera
 */
 
+use crate::{
+    control::freefloat_camera::*,
+    resources::CameraMode,
+    systems::{
+        camera_tracker::CameraToTrack,
+        selection_tracker::{MovableSelectionLock, Selected, SelectedMovable},
+    },
+};
 use bevy::{math::Vec2, prelude::*};
 use smooth_bevy_cameras::{LookAngles, LookTransform, LookTransformBundle, Smoother};
-
-use crate::{
-    control::freefloat_camera::freefloat_cam_controller,
-    systems::selection_tracker::MovableSelectionLock,
-};
 
 #[derive(Default)]
 pub struct FreefloatCameraPlugin {
@@ -25,20 +28,18 @@ impl FreefloatCameraPlugin {
 
 impl Plugin for FreefloatCameraPlugin {
     fn build(&self, app: &mut App) {
-        let app = app.add_system(control_system).add_event::<ControlEvent>();
-        // .add_system(sync_entity_with_camera)
-
+        let app = app
+            .add_system(control_system)
+            .add_event::<ControlEvent>()
+            .add_system(sync_orbit_traget);
         if !self.override_input_system {
             app.add_system(freefloat_cam_controller);
         }
     }
 }
 
-pub enum ControlEvent {
-    Rotate(Vec2),
-    TranslateEye(Vec3),
-    TranslateEyeMouse(f32),
-}
+#[derive(Component)]
+pub struct OrbitTarget;
 
 #[derive(Bundle)]
 pub struct FreefloatCameraBundle {
@@ -48,7 +49,16 @@ pub struct FreefloatCameraBundle {
     #[bundle]
     perspective: PerspectiveCameraBundle,
 }
-
+pub enum ControlEvent {
+    //Free-float mode only
+    Rotate(Vec2),
+    TranslateEye(Vec3),
+    TranslateEyeMouse(f32),
+    //Orbit mode only
+    Zoom(f32),
+    ToggleMode(bool),
+    Orbit(Vec2),
+}
 impl FreefloatCameraBundle {
     pub fn new(
         controller: FreefloatCameraController,
@@ -70,32 +80,10 @@ impl FreefloatCameraBundle {
     }
 }
 
-#[derive(Clone, Component, Copy, Debug)]
-pub struct FreefloatCameraController {
-    pub enabled: bool,
-    pub mouse_rotate_sensitivity: Vec2,
-    pub translate_sensitivity: f32,
-    pub smoothing_weight: f32,
-    pub pixels_per_line: f32,
-    pub mouse_wheel_zoom_sensitivity: f32,
-}
-
-impl Default for FreefloatCameraController {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            mouse_rotate_sensitivity: Vec2::splat(0.002),
-            translate_sensitivity: 1.0,
-            smoothing_weight: 0.9,
-            pixels_per_line: 53.0,
-            mouse_wheel_zoom_sensitivity: 0.5,
-        }
-    }
-}
-
 pub fn control_system(
     mut events: EventReader<ControlEvent>,
     mut cameras: Query<(&FreefloatCameraController, &mut LookTransform)>,
+    mut camera_mode: ResMut<CameraMode>,
     is_disabled: Res<MovableSelectionLock>,
 ) {
     // Can only control one camera at a time.
@@ -106,7 +94,7 @@ pub fn control_system(
             return;
         };
 
-    if controller.enabled && !is_disabled.0 {
+    if !is_disabled.0 && controller.enabled {
         let look_vector = look_trans.look_direction().unwrap();
         let mut look_angles = LookAngles::from_vector(look_vector);
 
@@ -116,20 +104,40 @@ pub fn control_system(
         let rot_z = yaw_rot * Vec3::Z;
 
         for event in events.iter() {
-            match event {
-                ControlEvent::Rotate(delta) => {
-                    // Rotates with pitch and yaw.
-                    look_angles.add_yaw(-delta.x);
-                    look_angles.add_pitch(-delta.y);
+            let mut radius_scalar = 1.0;
+            if camera_mode.0 {
+                match event {
+                    //Free-float mode only
+                    ControlEvent::Rotate(delta) => {
+                        // Rotates with pitch and yaw.
+                        look_angles.add_yaw(-delta.x);
+                        look_angles.add_pitch(-delta.y);
+                    }
+                    ControlEvent::TranslateEye(delta) => {
+                        // Translates up/down (Y) left/right (X) and forward/back (Z).
+                        look_trans.eye += delta.x * rot_x + delta.y * rot_y + delta.z * rot_z;
+                    }
+                    ControlEvent::TranslateEyeMouse(dis) => {
+                        let mut ori = look_trans.target - look_trans.eye;
+                        ori.y = 0.0;
+                        look_trans.eye += ori.normalize() * *dis; //THANK YOU SO MUCH Gibonus#0123@discord for helping out
+                    }
+                    _ => {}
                 }
-                ControlEvent::TranslateEye(delta) => {
-                    // Translates up/down (Y) left/right (X) and forward/back (Z).
-                    look_trans.eye += delta.x * rot_x + delta.y * rot_y + delta.z * rot_z;
-                }
-                ControlEvent::TranslateEyeMouse(dis) => {
-                    let mut ori = look_trans.target - look_trans.eye;
-                    ori.y = 0.0;
-                    look_trans.eye += ori.normalize() * *dis; //THANK YOU SO MUCH Gibonus#0123@discord for helping out
+            } else {
+                match event {
+                    //Orbit mod only
+                    ControlEvent::Orbit(delta) => {
+                        look_angles.add_yaw(-delta.x);
+                        look_angles.add_pitch(delta.y);
+                    }
+                    ControlEvent::Zoom(scalar) => {
+                        radius_scalar *= scalar;
+                    }
+                    ControlEvent::ToggleMode(mode) => {
+                        camera_mode.0 = *mode;
+                    }
+                    _ => {}
                 }
             }
         }
@@ -138,6 +146,22 @@ pub fn control_system(
 
         look_trans.target = look_trans.eye + look_trans.radius() * look_angles.unit_vector();
     } else {
-        events.iter(); // Drop the events.
+        drop(events);
     }
+}
+
+pub fn sync_orbit_traget(
+    selected: Res<SelectedMovable>,
+    query_target: Query<&Transform, With<Selected>>,
+    mut query_cam: Query<&mut LookTransform, With<CameraToTrack>>, //TODO:Optimize with multiple queries to make things easier
+) {
+    if selected.0 == None {
+        return;
+    }
+    match query_target.get_component::<Transform>(selected.0.unwrap()) {
+        Ok(target) => query_cam.get_single_mut().unwrap().target = target.translation,
+        Err(_) => {
+            return;
+        }
+    };
 }

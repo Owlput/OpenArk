@@ -47,7 +47,7 @@ impl CameraTracker {
     pub fn calc_vec_2d(&self, oth: Vec3) -> Vec3 {
         let mut vec = self.pos - oth;
         vec.y = 0.0;
-        vec
+        vec.normalize_or_zero()
     }
 }
 

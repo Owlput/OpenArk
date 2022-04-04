@@ -2,7 +2,7 @@ use bevy::{gltf::GltfMesh, prelude::*};
 use bevy_mod_picking::PickingEvent;
 
 use crate::{
-    environment::gltf_manual_bundle,
+    environment::gltf_manual_bundle, plugins::freefloat_camera::{ControlEvent, OrbitTarget},
 };
 
 #[derive(Component)]
@@ -18,15 +18,15 @@ pub struct SelectedMovable(pub Option<Entity>,pub Option<Entity>);//(parent,ring
 
 pub fn selection_tracker(
     mut commands: Commands,
-    mut events: EventReader<PickingEvent>,
+    mut event_reader: EventReader<PickingEvent>,
     mut disable: ResMut<MovableSelectionLock>,
     mut selected: ResMut<SelectedMovable>,
-    asset_server: Res<AssetServer>,
-    assets_gltf: Res<Assets<bevy::gltf::Gltf>>,
-    assets_gltfmesh: Res<Assets<GltfMesh>>,
+    mut event_writer: EventWriter<ControlEvent>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     query: Query<Entity, With<Movable>>,
 ) {
-    for event in events.iter() {
+    for event in event_reader.iter() {
         match event {
             PickingEvent::Selection(e) => {
                 match e {
@@ -37,21 +37,25 @@ pub fn selection_tracker(
                         selected.0 = Some(e.clone());
 
                         let entity_handle = commands
-                            .spawn_bundle(gltf_manual_bundle(
-                                asset_server.load("./selection_ring.gltf"),
-                                &assets_gltf,
-                                &assets_gltfmesh,
-                            ))
+                            .spawn_bundle(PbrBundle {
+                                mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+                                material: materials.add(Color::rgb(0.5, 0.7, 0.6).into()),
+                                transform: Transform::from_xyz(0.0, 2.0, 0.0),
+                                ..Default::default()
+                            })
                             .id();
-                        commands.entity(*e).insert(Selected);
+                        commands.entity(*e).insert(Selected).insert(OrbitTarget);
                         commands.entity(*e).push_children(&[entity_handle]);
+                        event_writer.send(ControlEvent::ToggleMode(false))
+
                     }
                     bevy_mod_picking::SelectionEvent::JustDeselected(e) => {
                         if disable.0 != false && query.get(*e).is_ok() {
                             disable.0 = false
                         };
                         selected.0 = None;
-                        commands.entity(*e).remove::<Selected>();
+                        commands.entity(*e).remove::<Selected>().remove::<OrbitTarget>();
+                        event_writer.send(ControlEvent::ToggleMode(true));
                     }
                 };
             }
@@ -71,6 +75,7 @@ pub fn movable_selection_ring_handler(
 ) {
     if selected.0 == None {
         if let Some(e) = selected.1 {
+            info!("remove the ring");
             commands.entity(e).despawn()
         }
         selected.1 = None;

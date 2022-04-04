@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::resources::{speed_modifier::SpeedModifier, ticker::Tick005};
+use crate::resources::{speed_modifier::SpeedModifier};
 
 #[derive(Component)]
 pub struct HasSkill;
@@ -22,17 +22,19 @@ impl SkillCounter {
             self.current += step_in;
         }
     }
+    pub fn is_ready(&self)->bool{
+        self.current >= self.max
+    }
 }
 
 pub fn skill_tick_sec(
     time: Res<Time>,
     multiplier: Res<SpeedModifier>,
-    mut timer: ResMut<Tick005>,
     mut query: Query<&mut SkillCounter>,
 ) {
-    if timer.0.tick(time.delta()).just_finished() {
-        for mut counter in query.iter_mut() {
-            counter.incr(multiplier.get().into());
+    for mut counter in query.iter_mut(){
+        if !counter.is_ready(){
+            counter.incr(time.delta_seconds_f64() * multiplier.get());
         }
     }
 }

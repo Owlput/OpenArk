@@ -2,6 +2,8 @@ use bevy::prelude::Component;
 
 pub mod weapon;
 pub mod status;
+pub mod battle_stats;
+pub mod mobility;
 
 #[derive(Component)]
 pub struct Name(pub String);

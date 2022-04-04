@@ -18,6 +18,10 @@ impl Plugin for AssetLoader {
         app.insert_resource(ticker::Tick005(Timer::from_seconds(0.05, true)))
             .insert_resource(SpeedModifier::new(1.0))
             .insert_resource(MovableSelectionLock::default())
-            .insert_resource(SelectedMovable::default());
+            .insert_resource(SelectedMovable::default())
+            .insert_resource(CameraMode::default());
     }
 }
+
+#[derive(Default)]
+pub struct CameraMode(pub bool);
