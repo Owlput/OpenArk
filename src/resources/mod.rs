@@ -19,7 +19,7 @@ impl Plugin for AssetLoader {
             .insert_resource(SpeedModifier::new(1.0))
             .insert_resource(MovableSelectionLock::default())
             .insert_resource(SelectedMovable::default())
-            .insert_resource(CameraMode::default());
+            .insert_resource(CameraMode(true));
     }
 }
 
