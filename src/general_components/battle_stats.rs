@@ -15,6 +15,7 @@ pub struct BattleStatsBundle {
     pub def: Defence,
     pub res: Resistance,
 }
+#[allow(dead_code)]
 impl BattleStatsBundle {
     pub fn new(hp: Health, def: Defence, res: Resistance) -> Self {
         Self { hp, def, res }

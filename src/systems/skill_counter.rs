@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::resources::{speed_modifier::SpeedModifier};
+use crate::resources::{speed_modifier::GameSpeedModifier};
 
 #[derive(Component)]
 pub struct HasSkill;
@@ -9,6 +9,7 @@ pub struct SkillCounter {
     pub current: f64,
     pub max: f64,
 }
+#[allow(dead_code)]
 impl SkillCounter {
     pub fn new(inital: f64, max: f64) -> Self {
         SkillCounter {
@@ -29,7 +30,7 @@ impl SkillCounter {
 
 pub fn skill_tick_sec(
     time: Res<Time>,
-    multiplier: Res<SpeedModifier>,
+    multiplier: Res<GameSpeedModifier>,
     mut query: Query<&mut SkillCounter>,
 ) {
     for mut counter in query.iter_mut(){

@@ -16,7 +16,7 @@ use bevy::{
 pub struct OrbitCameraPlugin {
     pub override_input_system: bool,
 }
-
+#[allow(dead_code)]
 impl OrbitCameraPlugin {
     pub fn new(override_input_system: bool) -> Self {
         Self {
@@ -44,7 +44,7 @@ pub struct OrbitCameraBundle {
     #[bundle]
     perspective: PerspectiveCameraBundle,
 }
-
+#[allow(dead_code)]
 impl OrbitCameraBundle {
     pub fn new(
         controller: OrbitCameraController,

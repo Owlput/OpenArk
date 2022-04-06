@@ -24,6 +24,7 @@ pub struct CameraTracker {
     orient: Quat,
 }
 
+#[allow(dead_code)]
 impl CameraTracker {
     pub fn new() -> Self {
         CameraTracker {

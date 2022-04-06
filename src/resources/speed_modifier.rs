@@ -1,8 +1,8 @@
-pub struct SpeedModifier {
+pub struct GameSpeedModifier {
     speed: f64,
 }
 
-impl SpeedModifier {
+impl GameSpeedModifier {
     pub fn new(multiplier:f64) -> Self {
         Self { speed: multiplier }
     }

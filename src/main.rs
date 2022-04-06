@@ -4,7 +4,6 @@ mod systems;
 pub mod plugins;
 pub mod environment;
 pub mod resources;
-pub mod control;
 pub mod event;
 
 use bevy::{prelude::App, DefaultPlugins};
