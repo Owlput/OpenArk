@@ -17,10 +17,9 @@ impl SkillCounter {
             max,
         }
     }
-    pub fn incr(&mut self, multiplier: f64) {
-        let step_in = 0.05 * multiplier;
-        if self.current + step_in < self.max {
-            self.current += step_in;
+    pub fn incr(&mut self, delta: f64) {
+        if self.current + delta <= self.max {
+            self.current += delta;
         }
     }
     pub fn is_ready(&self)->bool{

@@ -2,8 +2,9 @@ use bevy::{
     math::Vec3,
     prelude::{App, EventReader, Plugin, Query, Res, Transform, With},
 };
+use smooth_bevy_cameras::LookTransform;
 
-use crate::systems::selection_tracker::*;
+use crate::systems::{camera_tracker::CameraToTrack, selection_tracker::*};
 
 #[derive(Default)]
 pub struct PickableMovementPlugin;
@@ -28,17 +29,13 @@ fn control_system(
     if selected.0 == None {
         return;
     }
-    let mut transform = if let Some(transform) = query.iter_mut().next() {
-        transform
-    } else {
-        return;
-    };
-
-    for event in events.iter() {
-        match event {
-            &ControlEvent::Translate(delta) => transform.translation += delta,
+    if let Some(mut transform) = query.iter_mut().next() {
+        for event in events.iter() {
+            match event {
+                &ControlEvent::Translate(delta) => transform.translation += delta,
+            }
         }
-    }
+    };
 }
 
 use bevy::{core::Time, input::Input, prelude::*};
@@ -47,6 +44,7 @@ use crate::general_components::status::Speed;
 
 pub fn pickable_movement_controller(
     mut events: EventWriter<ControlEvent>,
+    camera: Query<&LookTransform, With<CameraToTrack>>,
     keyboard: Res<Input<KeyCode>>,
     controller: Query<&PickableMovementController>,
     time: Res<Time>,
@@ -69,12 +67,23 @@ pub fn pickable_movement_controller(
     if !enabled {
         return;
     }
+    let (forward, left) = if let Ok(look_trans) = camera.get_single() {
+        let mut ori = look_trans.target - look_trans.eye;
+        ori.y = 0.0;
+        (
+            ori.normalize(),
+            Vec3::from_slice(&[ori.z, 0.0, -ori.x]).normalize(),
+        )
+    } else {
+        info!("Failed to get the orientation of the camera");
+        return;
+    };
 
     for (key, mut dir) in [
-        (KeyCode::W, Vec3::Z),
-        (KeyCode::A, Vec3::X),
-        (KeyCode::S, -Vec3::Z),
-        (KeyCode::D, -Vec3::X),
+        (KeyCode::W, forward),
+        (KeyCode::A, left),
+        (KeyCode::S, -forward),
+        (KeyCode::D, -left),
     ]
     .iter()
     .cloned()
