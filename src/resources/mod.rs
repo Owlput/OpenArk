@@ -13,9 +13,7 @@ pub struct AssetLoader;
 impl Plugin for AssetLoader {
     fn build(&self, app: &mut App) {
         app.insert_resource(GameSpeedModifier::new(1.0))
-            .insert_resource(MovableSelectionLock::default())
-            .insert_resource(SelectedMovable::default())
-            .insert_resource(CameraMode(true));
+            .insert_resource(MovableSelectionLock::default());
     }
 }
 

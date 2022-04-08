@@ -35,6 +35,10 @@ pub fn setup_plane(
         transform: Transform::from_xyz(4.0, 10.0, 4.0),
         ..Default::default()
     });
+    let center_handle = commands
+        .spawn_bundle(TransformBundle::new(Transform::from_xyz(0.0, 0.25, 0.0)))
+        .insert(ModelCenter)
+        .id();
     commands
         .spawn_bundle(TransformBundle::new(Transform::from_xyz(0.0, 0.0, 1.0)))
         .with_children(|parent| {
@@ -47,13 +51,15 @@ pub fn setup_plane(
                 })
                 .insert_bundle(PickableBundle::default())
                 .insert(Movable)
-                .insert(Speed(3.0));
-            parent.spawn_bundle(PbrBundle {
-                mesh: meshes.add(Mesh::from(shape::Plane { size: 200f32 })),
-                material: white_handle,
-                ..PbrBundle::default()
-            });
+                .insert(Speed(3.0))
+                .insert(CenterHandle(center_handle))
+                .add_child(center_handle);
         });
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Plane { size: 200f32 })),
+        material: white_handle,
+        ..PbrBundle::default()
+    });
     gltf_manual_entity(
         commands,
         asset_server.load("./test_model.gltf"),
@@ -64,7 +70,13 @@ pub fn setup_plane(
 
 use bevy::gltf::GltfMesh;
 
-use crate::{general_components::status::Speed, systems::selection_tracker::Movable};
+use crate::{
+    general_components::{
+        model::{CenterHandle, ModelCenter},
+        status::Speed,
+    },
+    systems::selection_tracker::Movable,
+};
 
 pub fn gltf_manual_entity(
     mut commands: Commands,
@@ -75,7 +87,9 @@ pub fn gltf_manual_entity(
     if let Some(gltf) = assets_gltf.get(&my) {
         // Get the GLTF Mesh named "CarWheel"
         // (unwrap safety: we know the GLTF has loaded already)
-        let scene = assets_gltfmesh.get(&gltf.named_meshes["blockbench_export"]).unwrap();
+        let scene = assets_gltfmesh
+            .get(&gltf.named_meshes["blockbench_export"])
+            .unwrap();
 
         // Spawn a PBR entity with the mesh and material of the first GLTF Primitive
         commands
@@ -89,14 +103,16 @@ pub fn gltf_manual_entity(
     }
 }
 pub fn gltf_manual_bundle(
-    gltf_handle:Handle<Gltf>,
+    gltf_handle: Handle<Gltf>,
     assets_gltf: &Res<Assets<bevy::gltf::Gltf>>,
     assets_gltfmesh: &Res<Assets<GltfMesh>>,
 ) -> PbrBundle {
     if let Some(gltf) = assets_gltf.get(gltf_handle) {
         // Get the GLTF Mesh named "CarWheel"
         // (unwrap safety: we know the GLTF has loaded already)
-        let scene = assets_gltfmesh.get(&gltf.named_meshes["blockbench_export"]).unwrap();
+        let scene = assets_gltfmesh
+            .get(&gltf.named_meshes["blockbench_export"])
+            .unwrap();
         // Spawn a PBR entity with the mesh and material of the first GLTF Primitive
         PbrBundle {
             mesh: scene.primitives[0].mesh.clone(),

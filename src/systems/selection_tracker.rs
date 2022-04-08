@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_mod_picking::PickingEvent;
 
-use crate::plugins::freefloat_camera::ControlEvent;
+use crate::plugins::camera::ControlEvent;
 
 #[derive(Component)]
 pub struct SelectionRing;
@@ -12,7 +12,7 @@ pub struct Selected;
 #[derive(Default)]
 pub struct MovableSelectionLock(pub bool);
 #[derive(Default)]
-pub struct SelectedMovable(pub Option<Entity>, pub Option<Entity>); //(parent,ring)
+pub struct SelectedMovable(pub Option<Entity>, pub Option<Entity>); //(parent,marker)
 
 pub fn selection_tracker(
     mut commands: Commands,

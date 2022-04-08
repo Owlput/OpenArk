@@ -6,6 +6,7 @@
 */
 
 use crate::{
+    general_components::model::{CenterHandle, ModelCenter},
     resources::CameraMode,
     systems::{camera_tracker::CameraToTrack, selection_tracker::*},
 };
@@ -13,11 +14,11 @@ use bevy::{math::Vec2, prelude::*};
 use smooth_bevy_cameras::*;
 
 #[derive(Default)]
-pub struct FreefloatCameraPlugin {
+pub struct CameraPlugin {
     pub override_input_system: bool,
 }
 
-impl FreefloatCameraPlugin {
+impl CameraPlugin {
     pub fn new(override_input_system: bool) -> Self {
         Self {
             override_input_system,
@@ -25,21 +26,22 @@ impl FreefloatCameraPlugin {
     }
 }
 
-impl Plugin for FreefloatCameraPlugin {
+impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         let app = app
-            .add_system(control_system)
+            .insert_resource(CameraMode(true))
+            .add_system(camera_control_system)
             .add_event::<ControlEvent>()
             .add_system(sync_orbit_traget);
         if !self.override_input_system {
-            app.add_system(freefloat_cam_controller);
+            app.add_system(camera_control_mapper);
         }
     }
 }
 
 #[derive(Bundle)]
-pub struct FreefloatCameraBundle {
-    controller: FreefloatCameraController,
+pub struct CameraBundle {
+    controller: CameraController,
     #[bundle]
     look_transform: LookTransformBundle,
     #[bundle]
@@ -57,9 +59,9 @@ pub enum ControlEvent {
     ToggleMode(bool),
     Orbit(Vec2),
 }
-impl FreefloatCameraBundle {
+impl CameraBundle {
     pub fn new(
-        controller: FreefloatCameraController,
+        controller: CameraController,
         mut perspective: PerspectiveCameraBundle,
         eye: Vec3,
         target: Vec3,
@@ -78,20 +80,22 @@ impl FreefloatCameraBundle {
     }
 }
 
-pub fn control_system(
+pub fn camera_control_system(
     mut cam_ev: EventReader<ControlEvent>,
     mut target_ev: EventReader<crate::plugins::pickable_movement::ControlEvent>,
-    mut cameras: Query<(&FreefloatCameraController, &mut LookTransform)>,
+    mut cameras: Query<(&CameraController, &mut LookTransform)>,
     mut cam_mode: ResMut<CameraMode>,
 ) {
     // Can only control one camera at a time.
     let (controller, mut look_trans) =
         if let Some((controller, look_trans)) = cameras.iter_mut().next() {
-            (controller, look_trans) //Looking for the first controller in the query. If there's more than one, it's a bug
-                                     //匹配找到的第一个控制器，如果多于一个那就是bug
+            (controller, look_trans)
+            //Looking for the first controller in the query. If there's more than one, it's a bug
+            //匹配找到的第一个控制器，如果多于一个那就是bug
         } else {
-            return; //Controller not found,return
-                    //没找到，返回
+            return;
+            //Controller not found,return
+            //没找到，返回
         };
 
     if controller.enabled {
@@ -107,24 +111,20 @@ pub fn control_system(
                 match event {
                     //Free-float mode only
                     ControlEvent::Rotate(delta) => {
-                        info!("rotate");
                         // Rotates with pitch and yaw.
                         look_angles.add_yaw(-delta.x);
                         look_angles.add_pitch(-delta.y);
                     }
                     ControlEvent::TranslateEye(delta) => {
-                        info!("translate eye");
                         // Translates up/down (Y) left/right (X) and forward/back (Z).
                         look_trans.eye += delta.x * rot_x + delta.y * rot_y + delta.z * rot_z;
                     }
                     ControlEvent::TranslateEyeMouse(dis) => {
-                        info!("translate eye mouse");
                         let mut ori = look_trans.target - look_trans.eye;
                         ori.y = 0.0;
                         look_trans.eye += ori.normalize() * *dis; //THANK YOU SO MUCH Gibonus#0123@discord for helping out
                     }
                     ControlEvent::ToggleMode(mode) => {
-                        info!("change mode to {}", *mode);
                         cam_mode.0 = *mode;
                     }
                     _ => {}
@@ -140,22 +140,19 @@ pub fn control_system(
                 match event {
                     //Orbit mod only
                     ControlEvent::Orbit(delta) => {
-                        info!("orbit");
                         look_angles.add_yaw(-delta.x);
                         look_angles.add_pitch(delta.y);
                     }
                     ControlEvent::Zoom(scalar) => {
-                        info!("zoom");
                         radius_scalar *= scalar;
                     }
                     ControlEvent::ToggleMode(mode) => {
-                        info!("change mode to {}", *mode);
                         cam_mode.0 = *mode;
                     }
                     _ => {}
                 };
             }
-            info!("lookTrans:{}", look_trans.eye);
+            // info!("lookTrans:{}", look_trans.eye);
             for event in target_ev.iter() {
                 match event {
                     super::pickable_movement::ControlEvent::Translate(trans) => {
@@ -166,7 +163,7 @@ pub fn control_system(
             look_angles.assert_not_looking_up();
 
             let new_radius = (radius_scalar * look_trans.radius())
-                .min(1000000.0)
+                .min(1000.0)
                 .max(0.001);
             look_trans.eye = look_trans.target + new_radius * look_angles.unit_vector();
         }
@@ -178,7 +175,7 @@ pub fn control_system(
 use bevy::input::mouse::*;
 
 #[derive(Clone, Component, Copy, Debug)]
-pub struct FreefloatCameraController {
+pub struct CameraController {
     pub enabled: bool,
     pub mouse_rotate_sensitivity: Vec2,
     pub translate_sensitivity: Vec3,
@@ -188,7 +185,7 @@ pub struct FreefloatCameraController {
     pub mode: bool, //true for free_float, false for orbit
 }
 
-impl Default for FreefloatCameraController {
+impl Default for CameraController {
     fn default() -> Self {
         Self {
             enabled: true,
@@ -202,11 +199,11 @@ impl Default for FreefloatCameraController {
     }
 }
 
-pub fn freefloat_cam_controller(
+pub fn camera_control_mapper(
     mut events: EventWriter<ControlEvent>,
     keyboard: Res<Input<KeyCode>>,
     mut mouse_motion_events: EventReader<MouseMotion>,
-    controllers: Query<&FreefloatCameraController>,
+    controllers: Query<&CameraController>,
     mut mouse_wheel_reader: EventReader<MouseWheel>,
     mode: Res<CameraMode>,
 ) {
@@ -221,7 +218,7 @@ pub fn freefloat_cam_controller(
         //Controller not found,return
         //没找到，返回
     };
-    let FreefloatCameraController {
+    let CameraController {
         enabled,
         translate_sensitivity,
         mouse_rotate_sensitivity,
@@ -297,7 +294,6 @@ pub fn freefloat_cam_controller(
         }
 
         if keyboard.pressed(KeyCode::LControl) {
-            info!("orbit");
             events.send(ControlEvent::Orbit(mouse_rotate_sensitivity * cursor_delta));
         }
         let mut scalar = 1.0;
@@ -314,17 +310,22 @@ pub fn freefloat_cam_controller(
 }
 
 pub fn sync_orbit_traget(
-    selected: Res<SelectedMovable>,
-    query_target: Query<&Transform, With<Selected>>,
+    target: Res<SelectedMovable>,
+    query_target: Query<&CenterHandle, With<Selected>>,
+    query_center: Query<&GlobalTransform, With<ModelCenter>>,
     mut query_cam: Query<&mut LookTransform, With<CameraToTrack>>,
 ) {
-    if selected.0 == None {
-        return;
+    if let Some(target) = target.0 {
+        match query_target.get(target) {
+            Ok(center_handle) => {
+                let mut look_trans = query_cam.get_single_mut().unwrap();
+                let look_angles = LookAngles::from_vector(-look_trans.look_direction().unwrap());
+                look_trans.target = query_center.get(center_handle.0).unwrap().translation;
+                look_trans.eye = look_trans.target + look_trans.radius() * look_angles.unit_vector();
+            }
+            Err(_) => {
+                return;
+            }
+        };
     }
-    match query_target.get_component::<Transform>(selected.0.unwrap()) {
-        Ok(target) => query_cam.get_single_mut().unwrap().target = target.translation,
-        Err(_) => {
-            return;
-        }
-    };
 }
