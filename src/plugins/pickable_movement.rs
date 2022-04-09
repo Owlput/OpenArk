@@ -2,7 +2,7 @@ use bevy::{
     math::Vec3,
     prelude::{App, EventReader, Plugin, Query, Res, Transform, With},
 };
-use smooth_bevy_cameras::LookTransform;
+use smooth_bevy_cameras::{LookAngles, LookTransform};
 
 use crate::systems::{camera_tracker::CameraToTrack, selection_tracker::*};
 
@@ -24,17 +24,25 @@ pub enum ControlEvent {
 fn control_system(
     mut events: EventReader<ControlEvent>,
     selected: Res<SelectedMovable>,
-    mut query: Query<&mut Transform, With<Selected>>,
+    mut query_entity: Query<&mut Transform, With<Selected>>,
+    query_camera: Query<&LookTransform, With<CameraToTrack>>,
 ) {
     if selected.0 == None {
         return;
     }
-    if let Some(mut transform) = query.iter_mut().next() {
+    if let Some(mut transform) = query_entity.iter_mut().next() {
         for event in events.iter() {
             match event {
-                &ControlEvent::Translate(delta) => transform.translation += delta,
+                &ControlEvent::Translate(delta) => {
+                    transform.translation += delta;
+                }
             }
         }
+        transform.rotation = Quat::from_axis_angle(
+            Vec3::Y,
+            LookAngles::from_vector(query_camera.get_single().unwrap().look_direction().unwrap())
+                .get_yaw(),
+        );
     };
 }
 

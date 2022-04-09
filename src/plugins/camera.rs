@@ -100,6 +100,8 @@ pub fn camera_control_system(
 
     if controller.enabled {
         let look_vector = look_trans.look_direction().unwrap();
+        //Get the direction the camera currently looking at(not normalized)
+        //获取相机目前看着方向的向量（未化为单位长度）
 
         if cam_mode.0 {
             let mut look_angles = LookAngles::from_vector(look_vector);
@@ -110,35 +112,53 @@ pub fn camera_control_system(
             for event in cam_ev.iter() {
                 match event {
                     //Free-float mode only
+                    //仅限自由移动模式
                     ControlEvent::Rotate(delta) => {
                         // Rotates with pitch and yaw.
+                        //用俯仰和偏航来旋转
                         look_angles.add_yaw(-delta.x);
                         look_angles.add_pitch(-delta.y);
                     }
                     ControlEvent::TranslateEye(delta) => {
                         // Translates up/down (Y) left/right (X) and forward/back (Z).
+                        //上下移动（Y轴）/左右移动（X轴）/前后移动（Z轴）
                         look_trans.eye += delta.x * rot_x + delta.y * rot_y + delta.z * rot_z;
                     }
                     ControlEvent::TranslateEyeMouse(dis) => {
-                        let mut ori = look_trans.target - look_trans.eye;
-                        ori.y = 0.0;
-                        look_trans.eye += ori.normalize() * *dis; //THANK YOU SO MUCH Gibonus#0123@discord for helping out
+                        //Move the camera horizontally using mouse wheel when in free-float mode
+                        //在平面内用鼠标滚论移动相机
+                        look_trans.eye += Vec3::from_slice(&[look_vector.x, 0.0, look_vector.z])
+                            .normalize()
+                            * *dis;
+                        //THANK YOU SO MUCH Gibonus#0123@discord for helping out
+                        //It's moved in a plane so Y coordinate is set to zero
+                        //平面内移动所以将Y坐标设为0
+                        //Please don't forget to deref any data that get passed through events and that are used directly
+                        //even if Copy trait has been implemented
+                        //不要忘记在直接使用事件系统传进的数据时对其解引用，即使实现了Copy特型
                     }
                     ControlEvent::ToggleMode(mode) => {
                         cam_mode.0 = *mode;
                     }
-                    _ => {}
+                    _ => {
+                        //Wildcard for events that only meant for other modes
+                        //收集其他模式使用的事件
+                    }
                 }
             }
             look_angles.assert_not_looking_up();
 
             look_trans.target = look_trans.eye + look_trans.radius() * look_angles.unit_vector();
+            //Manage the position of the "eye" of the camera
+            //If not recalculated.....well, just comment it out to see what happens
+            //重新计算“眼睛”的位置，如果不重新计算.....注释掉就知道了
         } else {
             let mut look_angles = LookAngles::from_vector(-look_trans.look_direction().unwrap());
             let mut radius_scalar = 1.0;
             for event in cam_ev.iter() {
                 match event {
                     //Orbit mod only
+                    //仅限轨道模式
                     ControlEvent::Orbit(delta) => {
                         look_angles.add_yaw(-delta.x);
                         look_angles.add_pitch(delta.y);
@@ -152,19 +172,24 @@ pub fn camera_control_system(
                     _ => {}
                 };
             }
-            // info!("lookTrans:{}", look_trans.eye);
             for event in target_ev.iter() {
                 match event {
                     super::pickable_movement::ControlEvent::Translate(trans) => {
                         look_trans.eye += *trans
+                        //Sync the movement between the moving entity and the eye of the camera
+                        //If not the eye will get farther off the target
+                        //Not sure how to fix this so I just do this
+                        //同步眼睛和目标的移动，否则会漂得越来越远
+                        //可能有更好的办法处理但暂时先这样
                     }
                 }
             }
             look_angles.assert_not_looking_up();
 
-            let new_radius = (radius_scalar * look_trans.radius())
-                .min(1000.0)
-                .max(0.001);
+            let new_radius = (radius_scalar * look_trans.radius()).min(300.0).max(0.1);
+            //This gets bigger when farther off the target since it's a multiplication
+            //so the movement is more significant when farther off
+            //因为是乘法所以目标和眼睛距离越远移动越明显
             look_trans.eye = look_trans.target + new_radius * look_angles.unit_vector();
         }
     } else {
@@ -193,7 +218,7 @@ impl Default for CameraController {
             translate_sensitivity: Vec3::splat(0.8),
             smoothing_weight: 0.9,
             pixels_per_line: 53.0,
-            mouse_wheel_zoom_sensitivity: 0.5,
+            mouse_wheel_zoom_sensitivity: 0.2,
             mode: true,
         }
     }
@@ -201,10 +226,12 @@ impl Default for CameraController {
 
 pub fn camera_control_mapper(
     mut events: EventWriter<ControlEvent>,
-    keyboard: Res<Input<KeyCode>>,
     mut mouse_motion_events: EventReader<MouseMotion>,
-    controllers: Query<&CameraController>,
     mut mouse_wheel_reader: EventReader<MouseWheel>,
+    keyboard: Res<Input<KeyCode>>,
+
+    controllers: Query<&CameraController>,
+
     mode: Res<CameraMode>,
 ) {
     // Can only control one camera at a time.
@@ -321,7 +348,8 @@ pub fn sync_orbit_traget(
                 let mut look_trans = query_cam.get_single_mut().unwrap();
                 let look_angles = LookAngles::from_vector(-look_trans.look_direction().unwrap());
                 look_trans.target = query_center.get(center_handle.0).unwrap().translation;
-                look_trans.eye = look_trans.target + look_trans.radius() * look_angles.unit_vector();
+                look_trans.eye = look_trans.target
+                    + look_trans.radius().min(300.0).max(0.1) * look_angles.unit_vector();
             }
             Err(_) => {
                 return;

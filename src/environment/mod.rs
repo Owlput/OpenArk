@@ -22,9 +22,6 @@ pub fn setup_plane(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
-    assets_gltf: Res<Assets<bevy::gltf::Gltf>>,
-    assets_gltfmesh: Res<Assets<GltfMesh>>,
 ) {
     let white_handle = materials.add(StandardMaterial {
         base_color: Color::WHITE,
@@ -60,12 +57,6 @@ pub fn setup_plane(
         material: white_handle,
         ..PbrBundle::default()
     });
-    gltf_manual_entity(
-        commands,
-        asset_server.load("./test_model.gltf"),
-        assets_gltf,
-        assets_gltfmesh,
-    )
 }
 
 use bevy::gltf::GltfMesh;
@@ -88,7 +79,7 @@ pub fn gltf_manual_entity(
         // Get the GLTF Mesh named "CarWheel"
         // (unwrap safety: we know the GLTF has loaded already)
         let scene = assets_gltfmesh
-            .get(&gltf.named_meshes["blockbench_export"])
+            .get(&gltf.named_meshes["cube"])
             .unwrap();
 
         // Spawn a PBR entity with the mesh and material of the first GLTF Primitive
@@ -111,7 +102,7 @@ pub fn gltf_manual_bundle(
         // Get the GLTF Mesh named "CarWheel"
         // (unwrap safety: we know the GLTF has loaded already)
         let scene = assets_gltfmesh
-            .get(&gltf.named_meshes["blockbench_export"])
+            .get(&gltf.named_meshes["Scene0"])
             .unwrap();
         // Spawn a PBR entity with the mesh and material of the first GLTF Primitive
         PbrBundle {
