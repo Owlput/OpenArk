@@ -1,9 +1,9 @@
 use bevy::prelude::Component;
 
-use crate::{resources::effects::Effect, systems::skill_counter::SkillCounter};
+use crate::{resources::effects::Effect, general_components::counters::TimeBasedCounter};
 
 #[derive(Component)]
 pub struct TestSkill {
     pub effect: Vec<Effect>,
-    pub counter: SkillCounter,
+    pub counter: TimeBasedCounter,
 }

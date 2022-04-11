@@ -26,7 +26,7 @@ rustflags = ["-Clink-arg=-fuse-ld=lld"]
 #[profile.dev]
 #debug = 1
 [profile.dev]
-opt-level = 2
+opt-level = 1
 
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]

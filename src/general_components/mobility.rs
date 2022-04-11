@@ -4,7 +4,7 @@ use bevy::prelude::{Bundle, Component};
 pub struct Speed(pub f32);
 
 #[derive(Component)]
-pub struct Turning(pub f32, pub f32, pub f32); //(stationary,radius,omega)
+pub struct Turning(pub f32); //(omega)
 
 #[derive(Component)]
 pub struct Force(pub f32);
@@ -42,4 +42,21 @@ pub struct MobilityBundle {
     arts_doge_rate: ArtsDogeRate,
     phy_doge_rate: PhyDogeRate,
     max_blocking: MaxBlocking,
+}
+
+impl Default for MobilityBundle{
+    fn default()->Self{
+        Self{
+            speed:Speed(2.0),
+            turning:Turning(1.0),
+            force:Force(50.0),
+            friction_index:FrictionIndex(1.0),
+            weight:Weight(60.0),
+            escape_index:EscapeIndex(0.9),
+            redeploy_timer:RedeployTimer(0.0,50.0),
+            arts_doge_rate:ArtsDogeRate(0.0),
+            phy_doge_rate:PhyDogeRate(0.0),
+            max_blocking:MaxBlocking(2)
+        }
+    }
 }

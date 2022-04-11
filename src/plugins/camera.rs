@@ -174,8 +174,8 @@ pub fn camera_control_system(
             }
             for event in target_ev.iter() {
                 match event {
-                    super::pickable_movement::ControlEvent::Translate(trans) => {
-                        look_trans.eye += *trans
+                    super::pickable_movement::ControlEvent::Translate(trans,_) => {
+                        look_trans.eye += -*trans
                         //Sync the movement between the moving entity and the eye of the camera
                         //If not the eye will get farther off the target
                         //Not sure how to fix this so I just do this
