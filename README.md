@@ -4,6 +4,9 @@ Proof-of-concept fully open arknights themed game
 Just randomly poking around, feel free to mess these things around with me.   
 You'd better not take this seriously or you'll get rather disappointed.
 
+## 项目状态  
+暂停：等待依赖更新至bevy 0.7  
+
 ## 构建项目
 开发模式构建：
 ``cargo build --features bevy/dynamic ``  
