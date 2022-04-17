@@ -21,9 +21,9 @@ You'd better not take this seriously or you'll get rather disappointed.
   来，都可以来，只要你有好的态度，啥都可以干。  
   急需建模，[Blender](https://www.blender.org/)或者[BlockBench](https://github.com/JannisX11/blockbench)。  
   要求就BlockBench那个README里的例子就成（体素），不需要几万个面，也不需要2K材质。  
-  ~~由于引擎限制不支持骨骼动画所以没必要在这上面花时间。  ~~
-  bevy 0.7目前
-  模型需要能以``.gltf``或``.glb``导出，如果是``.obj``那可能需要更多工作。  
+  ~~由于引擎限制不支持骨骼动画所以没必要在这上面花时间。~~   
+  bevy 0.7目前支持骨骼动画     
+  模型需要能以``.gltf``或``.glb``导出，如果是``.obj``那可能需要更多工作。   
 
 ## FAQ
   - 为什么不使用Unity/Unreal？  
