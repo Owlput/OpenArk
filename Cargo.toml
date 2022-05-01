@@ -6,14 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.6.1"
-smooth-bevy-cameras = "0.2.0"
-bevy_obj = "0.6.0"
-bevy_transform = "0.6.0"
-bevy_utils = "0.6.0"
-bevy_mod_picking = "0.5.4"
+bevy = "0.7.0"
+smooth-bevy-cameras = "0.4.0"
+bevy_mod_picking = "0.6.1"
+bevy_rapier3d = { version = "0.13.0", features = [ "simd-stable" ] }
 # Add the contents of this file to `config.toml` to enable "fast build" configuration. Please read the notes below.
-
 # NOTE: For maximum performance, build using a nightly compiler
 # If you are using rust stable, remove the "-Zshare-generics=y" below.
 
@@ -30,4 +27,4 @@ opt-level = 1
 
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
-opt-level = 3
+opt-level = 2

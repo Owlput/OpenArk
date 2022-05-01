@@ -6,6 +6,7 @@ pub mod battle_stats;
 pub mod mobility;
 pub mod model;
 pub mod counters;
+pub mod effects;
 
 #[derive(Component)]
 pub struct Name(pub String);

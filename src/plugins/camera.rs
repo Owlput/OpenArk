@@ -10,7 +10,7 @@ use crate::{
     resources::CameraMode,
     systems::{camera_tracker::CameraToTrack, selection_tracker::*},
 };
-use bevy::{math::Vec2, prelude::*};
+use bevy::{math::Vec2, prelude::*, render::camera::Camera3d};
 use smooth_bevy_cameras::*;
 
 #[derive(Default)]
@@ -45,7 +45,7 @@ pub struct CameraBundle {
     #[bundle]
     look_transform: LookTransformBundle,
     #[bundle]
-    perspective: PerspectiveCameraBundle,
+    perspective: PerspectiveCameraBundle<Camera3d>,
 }
 pub enum ControlEvent {
     //Free-float mode only
@@ -62,7 +62,7 @@ pub enum ControlEvent {
 impl CameraBundle {
     pub fn new(
         controller: CameraController,
-        mut perspective: PerspectiveCameraBundle,
+        mut perspective: PerspectiveCameraBundle<Camera3d>,
         eye: Vec3,
         target: Vec3,
     ) -> Self {
@@ -82,7 +82,8 @@ impl CameraBundle {
 
 pub fn camera_control_system(
     mut cam_ev: EventReader<ControlEvent>,
-    mut target_ev: EventReader<crate::plugins::pickable_movement::ControlEvent>,
+    mut target_ev_non_phy: EventReader<crate::plugins::pickable_movement::ControlEvent>,
+    // mut target_ev_phy: EventReader<crate::rapier_phy::phy_movement::ControlEvent>,
     mut cameras: Query<(&CameraController, &mut LookTransform)>,
     mut cam_mode: ResMut<CameraMode>,
 ) {
@@ -133,7 +134,7 @@ pub fn camera_control_system(
                         //THANK YOU SO MUCH Gibonus#0123@discord for helping out
                         //It's moved in a plane so Y coordinate is set to zero
                         //平面内移动所以将Y坐标设为0
-                        //Please don't forget to deref any data that get passed through events and that are used directly
+                        //Don't forget to deref any data that get passed through events and that are used directly
                         //even if Copy trait has been implemented
                         //不要忘记在直接使用事件系统传进的数据时对其解引用，即使实现了Copy特型
                     }
@@ -141,8 +142,8 @@ pub fn camera_control_system(
                         cam_mode.0 = *mode;
                     }
                     _ => {
-                        //Wildcard for events that only meant for other modes
-                        //收集其他模式使用的事件
+                        //Wildcard for events those only meant for other modes
+                        //通配符收集其他模式使用的事件
                     }
                 }
             }
@@ -162,6 +163,11 @@ pub fn camera_control_system(
                     ControlEvent::Orbit(delta) => {
                         look_angles.add_yaw(-delta.x);
                         look_angles.add_pitch(delta.y);
+                        //NOTE:This implementation causes the camera to get close to the target when orbiting.
+                        //The faster you turn the camera the closer it gets
+                        //(the radius seems to decrease but actually it doesn't).
+                        //I'm not sure why
+                        //在环绕目标时转得越快会越靠近目标，原因未知。
                     }
                     ControlEvent::Zoom(scalar) => {
                         radius_scalar *= scalar;
@@ -172,10 +178,11 @@ pub fn camera_control_system(
                     _ => {}
                 };
             }
-            for event in target_ev.iter() {
+            let mut eye_trans = Vec3::ZERO;
+            for event in target_ev_non_phy.iter() {
                 match event {
-                    super::pickable_movement::ControlEvent::Translate(trans,_) => {
-                        look_trans.eye += -*trans
+                    super::pickable_movement::ControlEvent::Translate(trans, _) => {
+                        eye_trans -= *trans
                         //Sync the movement between the moving entity and the eye of the camera
                         //If not the eye will get farther off the target
                         //Not sure how to fix this so I just do this
@@ -184,8 +191,15 @@ pub fn camera_control_system(
                     }
                 }
             }
+            // for event in target_ev_phy.iter() {
+            //     match event {
+            //         crate::rapier_phy::phy_movement::ControlEvent::Translate(trans, _) => {
+            //             eye_trans -= *trans
+            //         }
+            //     }
+            // }
+            look_trans.eye += eye_trans;
             look_angles.assert_not_looking_up();
-
             let new_radius = (radius_scalar * look_trans.radius()).min(300.0).max(0.1);
             //This gets bigger when farther off the target since it's a multiplication
             //so the movement is more significant when farther off

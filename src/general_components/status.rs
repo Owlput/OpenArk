@@ -16,14 +16,3 @@ pub struct StatusInBattle{
     def:Defense,
     res:Resistance
 }
-
-#[derive(Component)]
-pub struct Speed(pub f32);
-#[derive(Component)]
-pub struct ShiftResistance(pub f32);
-
-#[derive(Bundle)]
-pub struct MobilityStatus{
-    speed:Speed,
-    shift_res:ShiftResistance
-}

@@ -1,6 +1,6 @@
 use bevy::prelude::Component;
 
-use crate::{resources::effects::Effect, general_components::counters::TimeBasedCounter};
+use crate::{general_components::{counters::TimeBasedCounter, effects::Effect}};
 
 #[derive(Component)]
 pub struct TestSkill {

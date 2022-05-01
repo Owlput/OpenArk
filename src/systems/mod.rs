@@ -10,6 +10,7 @@ use bevy::prelude::{Commands, Component, PerspectiveCameraBundle};
 use self::camera_tracker::CameraToTrack;
 use crate::plugins::camera::*;
 use crate::plugins::pickable_movement::PickableMovementController;
+// use crate::rapier_phy::phy_movement::PhyMovementController;
 
 #[derive(Component)]
 pub struct SyncRotationWithCamera;
@@ -27,4 +28,5 @@ pub fn setup_camera(mut commands: Commands) {
     commands
         .spawn()
         .insert(PickableMovementController { enabled: true });
+        // .insert(PhyMovementController { enabled: true });
 }

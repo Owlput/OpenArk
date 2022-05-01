@@ -53,11 +53,41 @@ pub fn setup_plane(
         .with_children(|parent| {
             parent.spawn_scene(assst_server.load("test_directioned.gltf#Scene0"));
         });
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane { size: 200f32 })),
-        material: white_handle,
-        ..PbrBundle::default()
-    });
+        // .insert_bundle(RigidBodyBundle {
+        //     position: Vec3::new(0.0, 2.0, 0.0).into(),
+        //     activation: RigidBodyActivation::cannot_sleep().into(),
+        //     mass_properties: (RigidBodyMassPropsFlags::ROTATION_LOCKED_X | RigidBodyMassPropsFlags::ROTATION_LOCKED_Z).into(),
+        //     ccd: RigidBodyCcd {
+        //         ccd_enabled: true,
+        //         ..Default::default()
+        //     }
+        //     .into(),
+        //     ..Default::default()
+        // })
+        // .insert_bundle(ColliderBundle {
+        //     shape: ColliderShape::cuboid(0.5, 0.5, 0.5).into(),
+        //     collider_type: ColliderType::Solid.into(),
+        //     position: (Vec3::new(0.0, 0.0, 0.0), Quat::from_rotation_y(0.0)).into(),
+        //     material: ColliderMaterial {
+        //         friction: 0.7,
+        //         restitution: 0.3,
+        //         ..Default::default()
+        //     }
+        //     .into(),
+        //     mass_properties: ColliderMassProps::Density(2.0).into(),
+        //     ..Default::default()
+        // })
+        // .insert(RigidBodyPositionSync::Discrete);
+    commands
+        .spawn_bundle(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Plane { size: 200f32 })),
+            material: white_handle,
+            ..PbrBundle::default()
+        });
+        // .insert_bundle(ColliderBundle {
+        //     shape: ColliderShape::cuboid(100.0, 0.05, 100.0).into(),
+        //     ..Default::default()
+        // });
 }
 
 use bevy::gltf::GltfMesh;
@@ -66,9 +96,8 @@ use crate::{
     general_components::{
         mobility::Turning,
         model::{CenterHandle, ModelCenter},
-        status::Speed,
-    },
-    systems::selection_tracker::Movable,
+        mobility::Speed,
+    },rapier_phy::PhyMovable, systems::selection_tracker::Movable,
 };
 
 pub fn gltf_manual_entity(

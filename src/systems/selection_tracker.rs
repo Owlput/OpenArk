@@ -1,18 +1,26 @@
 use bevy::prelude::*;
 use bevy_mod_picking::PickingEvent;
 
-use crate::plugins::camera::ControlEvent;
+use crate::{plugins::camera::ControlEvent, rapier_phy::PhyMovable};
 
 #[derive(Component)]
 pub struct SelectionRing;
 #[derive(Component)]
 pub struct Movable;
+//A marker for entities that can be moved using camera
+//能使用相机移动的实体的标签
 #[derive(Component)]
 pub struct Selected;
-#[derive(Default)]
-pub struct MovableSelectionLock(pub bool);
+//A marker for the currently selected entites
+//目前选中的实体的标签
+
 #[derive(Default)]
 pub struct SelectedMovable(pub Option<Entity>, pub Option<Entity>); //(parent,marker)
+//Obviously you can only move one entity through camera at a time, 
+//so simply quering (With<Selected>,With<Movable>) won't be enough.
+//However quering this way can still save us some resource.
+//显然你一次只能通过相机移动一个实体，所以查询(With<Selected>,With<Movable>)还不够
+//但是这样查询是可以节省一些资源的。
 
 pub fn selection_tracker(
     mut commands: Commands,
@@ -21,9 +29,11 @@ pub fn selection_tracker(
     mut event_writer: EventWriter<ControlEvent>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    query: Query<Entity, With<Movable>>,
+    query: Query<Entity, Or<(With<Movable>,With<PhyMovable>)>>,
 ) {
     for event in event_reader.iter() {
+        //iterate through all events
+        //遍历所有事件
         match event {
             PickingEvent::Selection(e) => {
                 match e {

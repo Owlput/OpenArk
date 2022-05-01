@@ -14,9 +14,7 @@ impl TimeBasedCounter {
         }
     }
     pub fn incr(&mut self, delta: f64) {
-        if self.current + delta <= self.max {
             self.current += delta;
-        }
     }
     pub fn is_ready(&self)->bool{
         self.current >= self.max
