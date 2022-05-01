@@ -5,7 +5,7 @@ Just randomly poking around, feel free to mess these things around with me.
 You'd better not take this seriously or you'll get rather disappointed.
 
 ## 项目状态  
-暂停：等待依赖更新至bevy 0.7  
+正常运行
 
 ## 构建项目
 开发模式构建：
@@ -24,6 +24,9 @@ You'd better not take this seriously or you'll get rather disappointed.
   ~~由于引擎限制不支持骨骼动画所以没必要在这上面花时间。~~   
   bevy 0.7目前支持骨骼动画     
   模型需要能以``.gltf``或``.glb``导出，如果是``.obj``那可能需要更多工作。   
+  
+## 免责声明  
+  本项目所使用依赖中的政治立场不代表本组织及本组织中任何个人的政治立场。  
 
 ## FAQ
   - 为什么不使用Unity/Unreal？  
