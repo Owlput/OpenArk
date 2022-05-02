@@ -4,20 +4,8 @@ use bevy::{
     prelude::*,
 };
 use bevy_mod_picking::PickableBundle;
+use bevy_rapier3d::prelude::{Collider, ColliderMassProperties, Friction, Velocity};
 
-#[derive(Bundle, Clone, Copy, Debug, Default)]
-pub struct TransformBundle {
-    pub local: Transform,
-    pub global: GlobalTransform,
-}
-impl TransformBundle {
-    pub fn new(local: Transform) -> Self {
-        TransformBundle {
-            local,
-            global: GlobalTransform::identity(),
-        }
-    }
-}
 pub fn setup_plane(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -34,70 +22,60 @@ pub fn setup_plane(
         ..Default::default()
     });
     let center_handle = commands
-        .spawn_bundle(TransformBundle::new(Transform::from_xyz(0.0, 0.25, 0.0)))
+        .spawn_bundle(TransformBundle::default())
         .insert(ModelCenter)
         .id();
     commands
         .spawn_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
             material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-            transform: Transform::from_xyz(0.0, 1., 0.0),
+            transform: Transform::from_xyz(0.0, 5., 0.0),
             ..Default::default()
         })
         .insert_bundle(PickableBundle::default())
-        .insert(Movable)
+        .insert(PhyMovable)
         .insert(Speed(3.0))
         .insert(Turning(5.))
         .insert(CenterHandle(center_handle))
         .add_child(center_handle)
+        // ^^^^^^^ define the center for camera to look at
+        //确定相机应该看的中心
+        .insert(RigidBody::Dynamic)
+        .insert(GravityScale(1.0))
+        .insert(Ccd::enabled())
+        .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z)
+        .insert(Velocity {
+            linvel: Vec3::new(0., 0., 0.),
+            angvel: Vec3::new(0., 0., 0.),
+        })
+        // ^^ rigid body
+        .insert(Collider::cuboid(0.5, 0.5, 0.5))
+        .insert(Friction::coefficient(0.5))
+        .insert(ColliderMassProperties::Density(1.0))
+        // ^^ collider
         .with_children(|parent| {
             parent.spawn_scene(assst_server.load("test_directioned.gltf#Scene0"));
         });
-        // .insert_bundle(RigidBodyBundle {
-        //     position: Vec3::new(0.0, 2.0, 0.0).into(),
-        //     activation: RigidBodyActivation::cannot_sleep().into(),
-        //     mass_properties: (RigidBodyMassPropsFlags::ROTATION_LOCKED_X | RigidBodyMassPropsFlags::ROTATION_LOCKED_Z).into(),
-        //     ccd: RigidBodyCcd {
-        //         ccd_enabled: true,
-        //         ..Default::default()
-        //     }
-        //     .into(),
-        //     ..Default::default()
-        // })
-        // .insert_bundle(ColliderBundle {
-        //     shape: ColliderShape::cuboid(0.5, 0.5, 0.5).into(),
-        //     collider_type: ColliderType::Solid.into(),
-        //     position: (Vec3::new(0.0, 0.0, 0.0), Quat::from_rotation_y(0.0)).into(),
-        //     material: ColliderMaterial {
-        //         friction: 0.7,
-        //         restitution: 0.3,
-        //         ..Default::default()
-        //     }
-        //     .into(),
-        //     mass_properties: ColliderMassProps::Density(2.0).into(),
-        //     ..Default::default()
-        // })
-        // .insert(RigidBodyPositionSync::Discrete);
-    commands
+    commands // set up the plane
         .spawn_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Plane { size: 200f32 })),
             material: white_handle,
             ..PbrBundle::default()
-        });
-        // .insert_bundle(ColliderBundle {
-        //     shape: ColliderShape::cuboid(100.0, 0.05, 100.0).into(),
-        //     ..Default::default()
-        // });
+        })
+        .insert(RigidBody::Fixed)
+        .insert(Collider::cuboid(100., 0.005, 100.));
 }
 
 use bevy::gltf::GltfMesh;
+use bevy_rapier3d::prelude::{Ccd, GravityScale, LockedAxes, RigidBody};
 
 use crate::{
     general_components::{
+        mobility::Speed,
         mobility::Turning,
         model::{CenterHandle, ModelCenter},
-        mobility::Speed,
-    },rapier_phy::PhyMovable, systems::selection_tracker::Movable,
+    },
+    rapier_phy::PhyMovable,
 };
 
 pub fn gltf_manual_entity(

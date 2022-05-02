@@ -1,12 +1,12 @@
-use bevy::{prelude::Bundle, sprite::SpriteBundle};
+use bevy::{prelude::Bundle, sprite::SpriteBundle, transform::TransformBundle};
 
-use crate::{environment::TransformBundle, general_components::Name};
+use crate::general_components::Name;
 
 #[derive(Bundle)]
-pub struct Operator{
-    name:Name,
+pub struct Operator {
+    name: Name,
     #[bundle]
-    transform:TransformBundle,
+    transform: TransformBundle,
     #[bundle]
-    sprite:SpriteBundle
+    sprite: SpriteBundle,
 }

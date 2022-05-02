@@ -13,8 +13,8 @@ pub fn sync_entity_with_camera(
     tracker: Res<CameraTracker>,
     mut query: Query<&mut Transform, With<TrackCamera>>,
 ) {
-    for transform in query.iter_mut() {
-        transform.looking_at(tracker.get_pos(), Vec3::default());
+    for mut transform in query.iter_mut() {
+        transform.look_at(tracker.get_pos(), Vec3::default());
     }
 }
 

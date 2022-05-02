@@ -6,6 +6,7 @@ pub mod plugins;
 pub mod rapier_phy;
 pub mod resources;
 mod systems;
+pub mod lib;
 
 use bevy::{prelude::App, DefaultPlugins};
 use bevy_mod_picking::*;
@@ -28,5 +29,6 @@ fn main() {
         .add_plugin(TickSkillPlugin)
         .add_plugin(SelectionTrackerPlugin)
         .add_plugin(PickableMovementPlugin)
+        .add_plugin(RapierPhyPlugin)
         .run();
 }
