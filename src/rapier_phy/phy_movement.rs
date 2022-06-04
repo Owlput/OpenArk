@@ -74,7 +74,6 @@ pub fn phy_movement_controller(
         //如果没有任何移动那就返回以避开下面耗时的计算。
     }
     if let Ok(_) = target.get_single() {
-        info!("input");
         events.send(ControlEvent::Translate(Quat::from_axis_angle(
             Vec3::Y,
             LookAngles::from_vector(camera.get_single().unwrap().look_direction().unwrap())
@@ -112,7 +111,7 @@ fn control_system(
                 }
             }
         }
-    } else {info!("not found");};
+    }
 }
 
 use bevy::{core::Time, input::Input, prelude::*};

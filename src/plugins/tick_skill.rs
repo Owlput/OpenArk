@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    systems::skill_counter::skill_tick_sec,
+    systems::skill_tick_sec,
 };
 
 pub struct TickSkillPlugin;

@@ -7,9 +7,11 @@ pub mod rapier_phy;
 pub mod resources;
 mod systems;
 pub mod lib;
+pub mod ui;
 
-use bevy::{prelude::App, DefaultPlugins};
+use bevy::{prelude::App, DefaultPlugins, winit::WinitSettings};
 use bevy_mod_picking::*;
+use bevy_rapier3d::prelude::{RapierDebugRenderPlugin, DebugRenderStyle, DebugRenderMode};
 use environment::setup_plane;
 use plugins::*;
 use rapier_phy::RapierPhyPlugin;
@@ -20,6 +22,7 @@ use systems::setup_camera;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .insert_resource(WinitSettings::game())
         .add_plugin(LookTransformPlugin)
         .add_plugin(AssetLoader)
         .add_startup_system(setup_camera)
@@ -30,5 +33,10 @@ fn main() {
         .add_plugin(SelectionTrackerPlugin)
         .add_plugin(PickableMovementPlugin)
         .add_plugin(RapierPhyPlugin)
+        .add_plugin(RapierDebugRenderPlugin{
+           depth_test:false,
+           style:DebugRenderStyle::default(),
+           mode:DebugRenderMode::all()
+        })
         .run();
 }

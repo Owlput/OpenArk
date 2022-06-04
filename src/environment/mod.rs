@@ -4,7 +4,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_mod_picking::PickableBundle;
-use bevy_rapier3d::prelude::{Collider, ColliderMassProperties, Friction, Velocity};
+use bevy_rapier3d::prelude::{Collider, ColliderMassProperties, Damping, Friction, Velocity, CoefficientCombineRule};
 
 pub fn setup_plane(
     mut commands: Commands,
@@ -50,8 +50,15 @@ pub fn setup_plane(
         })
         // ^^ rigid body
         .insert(Collider::cuboid(0.5, 0.5, 0.5))
-        .insert(Friction::coefficient(0.5))
+        .insert(Friction {
+            coefficient: 0.0,
+            combine_rule: CoefficientCombineRule::Min,
+        })
         .insert(ColliderMassProperties::Density(1.0))
+        .insert(Damping {
+            linear_damping: 2.0,
+            angular_damping: 1.0,
+        })
         // ^^ collider
         .with_children(|parent| {
             parent.spawn_scene(assst_server.load("test_directioned.gltf#Scene0"));

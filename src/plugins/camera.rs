@@ -32,7 +32,7 @@ impl Plugin for CameraPlugin {
             .insert_resource(CameraMode(true))
             .add_system(camera_control_system)
             .add_event::<ControlEvent>()
-            .add_system(sync_orbit_traget);
+            .add_system(sync_orbit_traget.after(camera_control_system));
         if !self.override_input_system {
             app.add_system(camera_control_mapper);
         }
@@ -82,8 +82,6 @@ impl CameraBundle {
 
 pub fn camera_control_system(
     mut cam_ev: EventReader<ControlEvent>,
-    mut target_ev_non_phy: EventReader<crate::plugins::pickable_movement::ControlEvent>,
-    // mut target_ev_phy: EventReader<crate::rapier_phy::phy_movement::ControlEvent>,
     mut cameras: Query<(&CameraController, &mut LookTransform)>,
     mut cam_mode: ResMut<CameraMode>,
 ) {
@@ -120,17 +118,22 @@ pub fn camera_control_system(
                         look_angles.add_yaw(-delta.x);
                         look_angles.add_pitch(-delta.y);
                     }
-                    ControlEvent::TranslateEye(delta) => {
+                    ControlEvent::TranslateEye(trans) => {
                         // Translates up/down (Y) left/right (X) and forward/back (Z).
                         //上下移动（Y轴）/左右移动（X轴）/前后移动（Z轴）
-                        look_trans.eye += delta.x * rot_x + delta.y * rot_y + delta.z * rot_z;
+                        let mut delta = Vec3::ZERO;
+                        delta += trans.x * rot_x + trans.y * rot_y + trans.z * rot_z;
+                        look_trans.eye += delta;
+                        look_trans.target += delta;
                     }
                     ControlEvent::TranslateEyeMouse(dis) => {
                         //Move the camera horizontally using mouse wheel when in free-float mode
                         //在平面内用鼠标滚论移动相机
-                        look_trans.eye += Vec3::from_slice(&[look_vector.x, 0.0, look_vector.z])
+                        let delta = Vec3::from_slice(&[look_vector.x, 0.0, look_vector.z])
                             .normalize()
                             * *dis;
+                        look_trans.eye += delta;
+                        look_trans.target += delta;
                         //THANK YOU SO MUCH Gibonus#0123@discord for helping out
                         //It's moved in a plane so Y coordinate is set to zero
                         //平面内移动所以将Y坐标设为0
@@ -148,11 +151,6 @@ pub fn camera_control_system(
                 }
             }
             look_angles.assert_not_looking_up();
-
-            look_trans.target = look_trans.eye + look_trans.radius() * look_angles.unit_vector();
-            //Manage the position of the "eye" of the camera
-            //If not recalculated.....well, just comment it out to see what happens
-            //重新计算“眼睛”的位置，如果不重新计算.....注释掉就知道了
         } else {
             let mut look_angles = LookAngles::from_vector(-look_trans.look_direction().unwrap());
             let mut radius_scalar = 1.0;
@@ -178,27 +176,6 @@ pub fn camera_control_system(
                     _ => {}
                 };
             }
-            let mut eye_trans = Vec3::ZERO;
-            for event in target_ev_non_phy.iter() {
-                match event {
-                    super::pickable_movement::ControlEvent::Translate(trans, _) => {
-                        eye_trans -= *trans
-                        //Sync the movement between the moving entity and the eye of the camera
-                        //If not the eye will get farther off the target
-                        //Not sure how to fix this so I just do this
-                        //同步眼睛和目标的移动，否则会漂得越来越远
-                        //可能有更好的办法处理但暂时先这样
-                    }
-                }
-            }
-            // for event in target_ev_phy.iter() {
-            //     match event {
-            //         crate::rapier_phy::phy_movement::ControlEvent::Translate(trans, _) => {
-            //             eye_trans -= *trans
-            //         }
-            //     }
-            // }
-            look_trans.eye += eye_trans;
             look_angles.assert_not_looking_up();
             let new_radius = (radius_scalar * look_trans.radius()).min(300.0).max(0.1);
             //This gets bigger when farther off the target since it's a multiplication
@@ -243,9 +220,7 @@ pub fn camera_control_mapper(
     mut mouse_motion_events: EventReader<MouseMotion>,
     mut mouse_wheel_reader: EventReader<MouseWheel>,
     keyboard: Res<Input<KeyCode>>,
-
     controllers: Query<&CameraController>,
-
     mode: Res<CameraMode>,
 ) {
     // Can only control one camera at a time.
@@ -287,6 +262,7 @@ pub fn camera_control_mapper(
         }
 
         if keyboard.pressed(KeyCode::LControl) {
+            info!("rotate:{}", cursor_delta);
             //If LControl is pressed, you can look around with your mouse like a FPS-style camera.
             //如果按下了左Ctrl,那你就可以移动鼠标来到处看看。
             events.send(ControlEvent::Rotate(
@@ -357,13 +333,27 @@ pub fn sync_orbit_traget(
     mut query_cam: Query<&mut LookTransform, With<CameraToTrack>>,
 ) {
     if let Some(target) = target.0 {
+        //If something movable is selected...
+        //当选中了可移动的物体时...
         match query_target.get(target) {
+            //Get the center
+            //获取这个物体的中心
             Ok(center_handle) => {
                 let mut look_trans = query_cam.get_single_mut().unwrap();
+                //Get the LookTransform of the camera
+                //获取相机的LookTransform
+                let radius = look_trans.radius().min(300.0).max(0.1);
+                //Save the radius beforehands
+                //提前保存半径
                 let look_angles = LookAngles::from_vector(-look_trans.look_direction().unwrap());
+                //Get the direction it's looking at
+                //获取相机正在看着的方向
                 look_trans.target = query_center.get(center_handle.0).unwrap().translation;
-                look_trans.eye = look_trans.target
-                    + look_trans.radius().min(300.0).max(0.1) * look_angles.unit_vector();
+                //Set the target to the center
+                //将目标设为中心
+                look_trans.eye = look_trans.target + radius * look_angles.unit_vector();
+                //Recalculate the position of the camera's eye
+                //重新计算眼睛的位置
             }
             Err(_) => {
                 return;
