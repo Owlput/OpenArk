@@ -12,7 +12,7 @@ pub mod ui;
 use bevy::{prelude::App, DefaultPlugins, winit::WinitSettings};
 use bevy_mod_picking::*;
 use bevy_rapier3d::prelude::{RapierDebugRenderPlugin, DebugRenderStyle, DebugRenderMode};
-use environment::setup_plane;
+use environment::setup_environment;
 use plugins::*;
 use rapier_phy::RapierPhyPlugin;
 use resources::AssetLoader;
@@ -27,7 +27,7 @@ fn main() {
         .add_plugin(AssetLoader)
         .add_startup_system(setup_camera)
         .add_plugin(CameraPlugin::default())
-        .add_startup_system(setup_plane)
+        .add_startup_system(setup_environment)
         .add_plugins(DefaultPickingPlugins)
         .add_plugin(TickSkillPlugin)
         .add_plugin(SelectionTrackerPlugin)

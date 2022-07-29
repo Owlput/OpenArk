@@ -1,7 +1,6 @@
 use bevy::prelude::Component;
 
 pub mod weapon;
-pub mod status;
 pub mod battle_stats;
 pub mod mobility;
 pub mod model;

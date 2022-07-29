@@ -12,8 +12,8 @@ pub enum Direction {
     BR,
     O,
 }
-//A pretty dumb way to determine the direction
-//Hoping for a better solution
+//-A pretty dumb way to determine the direction
+// Hoping for a better solution
 //一个判断方向的蠢办法，看看有没有更聪明的
 impl Direction {
     pub fn to_angle(self) -> f32 {

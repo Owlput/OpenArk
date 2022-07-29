@@ -6,13 +6,15 @@ use crate::{plugins::camera::ControlEvent, rapier_phy::PhyMovable};
 #[derive(Component)]
 pub struct SelectionRing;
 #[derive(Component)]
-pub struct Movable;
-//A marker for entities that can be moved using camera
+/// A markup component for entities that can be moved using camera
 //能使用相机移动的实体的标签
+pub struct Movable;
+
 #[derive(Component)]
-pub struct Selected;
-//A marker for the currently selected entites
+/// A markup component for the currently selected entites
 //目前选中的实体的标签
+pub struct Selected;
+
 
 #[derive(Default)]
 pub struct SelectedMovable(pub Option<Entity>, pub Option<Entity>); //(parent,marker)

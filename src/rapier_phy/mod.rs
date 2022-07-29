@@ -9,6 +9,8 @@ use bevy_rapier3d::plugin::RapierConfiguration;
 use bevy_rapier3d::plugin::RapierPhysicsPlugin;
 
 use self::phy_movement::PhyMovementPlugin;
+
+/// The plugin for enabling Rapier physics engine.
 pub struct RapierPhyPlugin;
 
 impl Plugin for RapierPhyPlugin {
@@ -23,4 +25,5 @@ impl Plugin for RapierPhyPlugin {
 }
 
 #[derive(Component)]
+/// A markup component used for identifing entities that follow a physical way of moving around.
 pub struct PhyMovable;

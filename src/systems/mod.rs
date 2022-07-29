@@ -14,6 +14,7 @@ use crate::rapier_phy::phy_movement::PhyMovementController;
 pub use skill_counter::*;
 
 #[derive(Component)]
+/// A markup component used for identifing entities that need to sync rotations with camera.
 pub struct SyncRotationWithCamera;
 
 pub fn setup_camera(mut commands: Commands) {

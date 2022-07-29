@@ -1,3 +1,5 @@
+/// A multiplier for game speed. 1.0 is normal speed.  
+/// Handle with care.
 pub struct GameSpeedModifier {
     speed: f64,
 }

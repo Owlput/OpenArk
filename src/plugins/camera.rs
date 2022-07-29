@@ -13,6 +13,8 @@ use crate::{
 use bevy::{math::Vec2, prelude::*, render::camera::Camera3d};
 use smooth_bevy_cameras::*;
 
+/// The plugin for in-game camera, or *your* "eyes".
+/// The code here is mainly from ``smooth_bevy_camera`` crate, with some modification to suit our need.
 #[derive(Default)]
 pub struct CameraPlugin {
     pub override_input_system: bool,
@@ -262,7 +264,6 @@ pub fn camera_control_mapper(
         }
 
         if keyboard.pressed(KeyCode::LControl) {
-            info!("rotate:{}", cursor_delta);
             //If LControl is pressed, you can look around with your mouse like a FPS-style camera.
             //如果按下了左Ctrl,那你就可以移动鼠标来到处看看。
             events.send(ControlEvent::Rotate(
