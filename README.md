@@ -5,7 +5,7 @@ Just randomly poking around, feel free to mess these things around with me.
 You'd better not take this seriously or you'll get rather disappointed.
 
 ## 项目状态  
-正常运行
+中止：无资源分配
 
 ## 构建项目
 开发模式构建：
